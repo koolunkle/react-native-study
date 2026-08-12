@@ -31,6 +31,8 @@ npx expo start --web
 
 `expo-sqlite`의 웹 백엔드가 `.wasm` 모듈을 요구하기 때문에, [`metro.config.js`](./metro.config.js)에 wasm 에셋 처리와 `SharedArrayBuffer`용 COOP/COEP 헤더가 설정되어 있습니다. 웹 버전은 브라우저 저장소 기반이라 데이터가 기기/브라우저별로 분리됩니다 (PRD.md 8절 참고).
 
+웹 SQLite는 OPFS(Origin Private File System)의 SyncAccessHandle을 쓰는데, **같은 오리진에서 DB 파일은 탭 하나만 열 수 있습니다.** 같은 앱을 새 탭으로 하나 더 열면(같은 포트) 파일 잠금 충돌로 먼저 연 탭이 멈추거나 나중 탭이 에러를 냅니다 — 웹으로 테스트할 땐 탭을 하나만 유지하세요.
+
 ## 프로젝트 구조
 
 ```

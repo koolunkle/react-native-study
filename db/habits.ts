@@ -17,7 +17,7 @@ export type Habit = {
   createdAt: string;
 };
 
-type HabitRow = {
+export type HabitRow = {
   id: number;
   name: string;
   icon: string;
@@ -32,7 +32,7 @@ type HabitRow = {
   created_at: string;
 };
 
-function fromRow(row: HabitRow): Habit {
+export function habitFromRow(row: HabitRow): Habit {
   return {
     id: row.id,
     name: row.name,
@@ -54,7 +54,7 @@ export async function listActiveHabits(db: SQLiteDatabase): Promise<Habit[]> {
   const rows = await db.getAllAsync<HabitRow>(
     `SELECT * FROM habits WHERE archived_at IS NULL ORDER BY sort_order ASC, id ASC`
   );
-  return rows.map(fromRow);
+  return rows.map(habitFromRow);
 }
 
 /** 습관 개수 제한(PRD 6-1 단계별 제한) 체크용. */

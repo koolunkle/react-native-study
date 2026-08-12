@@ -1,18 +1,129 @@
-import { StyleSheet } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
 
 import { Text, View } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { Radius, Spacing } from '@/constants/Layout';
+import { getMonthLogSummary } from '@/db/habitLogs';
+import {
+  WEEKDAY_LABELS_KO,
+  formatKoreanMonth,
+  getMonthGrid,
+  todayKey,
+} from '@/lib/date';
 
 /**
  * 캘린더/히스토리 — PRD 6-3
- * TODO: 월별 캘린더 ↔ 타임라인 뷰 전환, 날짜별 습관 아이콘 표시,
- *       습관 필터링, 날짜 클릭 시 app/calendar/[date] 상세로 이동.
+ * TODO: 리스트(타임라인) 뷰 전환, 특정 습관만 선택해서 표시하는 필터링.
  */
 export default function CalendarScreen() {
+  const router = useRouter();
+  const db = useSQLiteContext();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme];
+
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+  const [summary, setSummary] = useState<Record<string, string[]>>({});
+
+  const yearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      getMonthLogSummary(db, yearMonth).then((result) => {
+        if (!cancelled) setSummary(result);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [db, yearMonth])
+  );
+
+  function goPrevMonth() {
+    if (month === 0) {
+      setYear((y) => y - 1);
+      setMonth(11);
+    } else {
+      setMonth((m) => m - 1);
+    }
+  }
+
+  function goNextMonth() {
+    if (month === 11) {
+      setYear((y) => y + 1);
+      setMonth(0);
+    } else {
+      setMonth((m) => m + 1);
+    }
+  }
+
+  const grid = getMonthGrid(year, month);
+  const weeks = Array.from({ length: 6 }, (_, i) => grid.slice(i * 7, i * 7 + 7));
+  const today = todayKey();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>캘린더 📅</Text>
-      <Text style={styles.hint}>지난 기록을 달력으로 볼 수 있어요</Text>
+      <View style={styles.header}>
+        <Pressable onPress={goPrevMonth} hitSlop={12}>
+          <Text style={styles.navArrow}>‹</Text>
+        </Pressable>
+        <Text style={styles.monthTitle}>{formatKoreanMonth(year, month)}</Text>
+        <Pressable onPress={goNextMonth} hitSlop={12}>
+          <Text style={styles.navArrow}>›</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.weekdayRow}>
+        {WEEKDAY_LABELS_KO.map((label) => (
+          <Text key={label} style={styles.weekdayLabel}>
+            {label}
+          </Text>
+        ))}
+      </View>
+
+      {weeks.map((week, i) => (
+        <View key={i} style={styles.weekRow}>
+          {week.map((day) => {
+            const icons = summary[day.dateKey] ?? [];
+            const isToday = day.dateKey === today;
+            return (
+              <Pressable
+                key={day.dateKey}
+                onPress={() => router.push(`/calendar/${day.dateKey}`)}
+                style={[
+                  styles.dayCell,
+                  isToday && { borderColor: colors.mintDeep, borderWidth: 1.5 },
+                ]}>
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    !day.inCurrentMonth && { color: colors.inkSoft, opacity: 0.4 },
+                  ]}>
+                  {day.date.getDate()}
+                </Text>
+                <View style={styles.iconRow}>
+                  {icons.slice(0, 3).map((icon, idx) => (
+                    <Text key={idx} style={styles.dayIcon}>
+                      {icon}
+                    </Text>
+                  ))}
+                  {icons.length > 3 && (
+                    <Text style={[styles.dayIconMore, { color: colors.inkSoft }]}>
+                      +{icons.length - 3}
+                    </Text>
+                  )}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
     </View>
   );
 }
@@ -20,17 +131,63 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
+  },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: Spacing.lg,
+    marginBottom: Spacing.md,
   },
-  title: {
+  navArrow: {
     fontSize: 24,
-    fontFamily: Fonts.title,
+    paddingHorizontal: Spacing.sm,
   },
-  hint: {
-    fontSize: 14,
-    fontFamily: Fonts.body,
+  monthTitle: {
+    fontFamily: Fonts.title,
+    fontSize: 20,
+    minWidth: 120,
+    textAlign: 'center',
+  },
+  weekdayRow: {
+    flexDirection: 'row',
+  },
+  weekdayLabel: {
+    width: `${100 / 7}%`,
+    textAlign: 'center',
+    fontFamily: Fonts.num,
+    fontSize: 12,
     opacity: 0.6,
+    marginBottom: Spacing.xs,
+  },
+  weekRow: {
+    flexDirection: 'row',
+  },
+  dayCell: {
+    width: `${100 / 7}%`,
+    minHeight: 56,
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.sm,
+  },
+  dayNumber: {
+    fontFamily: Fonts.num,
+    fontSize: 13,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  dayIcon: {
+    fontSize: 11,
+  },
+  dayIconMore: {
+    fontFamily: Fonts.num,
+    fontSize: 10,
+    marginLeft: 2,
   },
 });

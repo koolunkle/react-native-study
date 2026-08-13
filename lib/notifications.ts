@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+import { isRunningInExpoGo } from 'expo';
 import { Platform } from 'react-native';
 import { type SQLiteDatabase } from 'expo-sqlite';
 
@@ -10,21 +10,36 @@ import { getAppSettings } from '@/db/settings';
  * 문구는 발사 시점의 실제 미완료 개수를 반영하지 못하는 고정 문구로 구현한다
  * (배경 태스크 없이는 스케줄된 시점에 개수를 재계산할 수 없음 — 의도적 MVP 범위).
  *
- * expo-notifications의 로컬 알림 예약/취소 API는 웹에서 지원되지 않는다
- * (PRD 4: 모바일 웹도 병행 지원하는 플랫폼이므로 웹에서는 조용히 no-op 처리).
+ * expo-notifications는 웹에서 로컬 알림 예약 API를 지원하지 않고, Expo Go의 Android에서는
+ * SDK 53부터 원격 푸시 관련 코드가 제거되어 "단순히 import만 해도" 예외를 던진다
+ * (내부적으로 모듈 최상단에서 push-token 자동 등록 리스너를 등록하기 때문).
+ * 그래서 Platform 체크를 함수 안에서 하는 것만으로는 막을 수 없고, 지원되지 않는
+ * 환경에서는 모듈 자체를 아예 불러오지 않도록 동적 import로 지연 로딩한다.
  */
 
-export const NOTIFICATIONS_SUPPORTED = Platform.OS !== 'web';
+export const NOTIFICATIONS_SUPPORTED =
+  Platform.OS !== 'web' && !(Platform.OS === 'android' && isRunningInExpoGo());
 
-if (NOTIFICATIONS_SUPPORTED) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-    }),
-  });
+type NotificationsModule = typeof import('expo-notifications');
+
+let modulePromise: Promise<NotificationsModule> | null = null;
+
+function loadNotifications(): Promise<NotificationsModule> | null {
+  if (!NOTIFICATIONS_SUPPORTED) return null;
+  if (!modulePromise) {
+    modulePromise = import('expo-notifications').then((mod) => {
+      mod.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+        }),
+      });
+      return mod;
+    });
+  }
+  return modulePromise;
 }
 
 const INCOMPLETE_REMINDER_ID = 'incomplete-reminder-global';
@@ -39,7 +54,9 @@ function parseTime(time: string): { hour: number; minute: number } {
 }
 
 export async function initNotifications(): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  const Notifications = await loadNotifications();
+  if (!Notifications) return;
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: '알림',
@@ -49,7 +66,8 @@ export async function initNotifications(): Promise<void> {
 }
 
 export async function ensureNotificationPermission(): Promise<boolean> {
-  if (!NOTIFICATIONS_SUPPORTED) return false;
+  const Notifications = await loadNotifications();
+  if (!Notifications) return false;
 
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
@@ -60,7 +78,8 @@ export async function ensureNotificationPermission(): Promise<boolean> {
 }
 
 export async function cancelHabitReminder(habitId: number): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  const Notifications = await loadNotifications();
+  if (!Notifications) return;
   await Notifications.cancelScheduledNotificationAsync(habitReminderId(habitId));
 }
 
@@ -69,7 +88,8 @@ export async function scheduleHabitReminder(
   habit: Habit,
   notifGlobalEnabled: boolean
 ): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  const Notifications = await loadNotifications();
+  if (!Notifications) return;
 
   const identifier = habitReminderId(habit.id);
   await Notifications.cancelScheduledNotificationAsync(identifier);
@@ -88,12 +108,15 @@ export async function scheduleHabitReminder(
 }
 
 export async function cancelIncompleteReminder(): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  const Notifications = await loadNotifications();
+  if (!Notifications) return;
   await Notifications.cancelScheduledNotificationAsync(INCOMPLETE_REMINDER_ID);
 }
 
 export async function scheduleIncompleteReminder(time: string): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  const Notifications = await loadNotifications();
+  if (!Notifications) return;
+
   await cancelIncompleteReminder();
 
   const { hour, minute } = parseTime(time);
@@ -108,7 +131,8 @@ export async function scheduleIncompleteReminder(time: string): Promise<void> {
 }
 
 export async function cancelAllReminders(): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  const Notifications = await loadNotifications();
+  if (!Notifications) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 

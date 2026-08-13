@@ -44,3 +44,46 @@ export function formatKoreanDateLong(dateKey: string): string {
   const weekday = WEEKDAY_LABELS_KO[new Date(y, m - 1, d).getDay()];
   return `${y}년 ${m}월 ${d}일 (${weekday})`;
 }
+
+/** 통계 화면(PRD 6-5)의 기간 선택. */
+export type StatsPeriod = 'week' | 'month' | 'all';
+
+export type DateRange = { start: string; end: string };
+
+function parseDateKey(dateKey: string): Date {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** 일요일 시작 주 (getMonthGrid와 동일한 일=0 규칙). */
+export function getWeekRange(dateKey: string): DateRange {
+  const date = parseDateKey(dateKey);
+  const start = new Date(date);
+  start.setDate(date.getDate() - date.getDay());
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: toDateKey(start), end: toDateKey(end) };
+}
+
+export function getMonthRange(year: number, month: number): DateRange {
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  return { start: toDateKey(start), end: toDateKey(end) };
+}
+
+/**
+ * 기간 선택에 맞는 날짜 범위를 계산. 'all'은 하한이 없으므로 start를 null로 반환하고,
+ * 호출부가 getAllTimeStart(db) 등으로 구한 실제 하한을 채워 넣는다.
+ */
+export function getPeriodRange(
+  period: StatsPeriod,
+  referenceDateKey: string,
+  allTimeStart: string | null
+): { start: string | null; end: string } {
+  if (period === 'week') return getWeekRange(referenceDateKey);
+  if (period === 'month') {
+    const date = parseDateKey(referenceDateKey);
+    return getMonthRange(date.getFullYear(), date.getMonth());
+  }
+  return { start: allTimeStart, end: referenceDateKey };
+}

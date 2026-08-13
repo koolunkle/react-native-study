@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { Text, View } from '@/components/Themed';
@@ -19,13 +19,13 @@ import {
   DEFAULT_HABIT_LIMIT,
   HABIT_CATEGORIES,
   HABIT_ICONS,
+  HABIT_LIMIT_STAGES,
 } from '@/constants/HabitOptions';
 import { countActiveHabits, insertHabit, type RepeatType } from '@/db/habits';
+import { getHabitLimitStage } from '@/db/settings';
 
 /**
  * 습관 등록 — PRD 6-1
- * TODO: 습관 개수 제한 단계는 설정에서 선택 가능해야 하지만, 설정 화면이 아직 없어
- *       기본값(1단계 새싹, 3개)만 적용 중.
  */
 export default function NewHabitScreen() {
   const router = useRouter();
@@ -41,6 +41,20 @@ export default function NewHabitScreen() {
   const [repeatCount, setRepeatCount] = useState(3);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [limitStage, setLimitStage] =
+    useState<(typeof HABIT_LIMIT_STAGES)[number]>(DEFAULT_HABIT_LIMIT);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      getHabitLimitStage(db).then((stage) => {
+        if (!cancelled) setLimitStage(stage);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [db])
+  );
 
   async function handleSave() {
     if (!name.trim()) {
@@ -60,10 +74,8 @@ export default function NewHabitScreen() {
     setError(null);
     try {
       const activeCount = await countActiveHabits(db);
-      if (activeCount >= DEFAULT_HABIT_LIMIT.max) {
-        setError(
-          `${DEFAULT_HABIT_LIMIT.name} 단계에서는 최대 ${DEFAULT_HABIT_LIMIT.max}개까지 등록할 수 있어요`
-        );
+      if (activeCount >= limitStage.max) {
+        setError(`${limitStage.name} 단계에서는 최대 ${limitStage.max}개까지 등록할 수 있어요`);
         return;
       }
 

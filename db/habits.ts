@@ -89,3 +89,61 @@ export async function insertHabit(db: SQLiteDatabase, input: NewHabitInput): Pro
   );
   return result.lastInsertRowId;
 }
+
+export async function getHabitById(db: SQLiteDatabase, id: number): Promise<Habit | null> {
+  const row = await db.getFirstAsync<HabitRow>(`SELECT * FROM habits WHERE id = ?`, [id]);
+  return row ? habitFromRow(row) : null;
+}
+
+export type UpdateHabitInput = {
+  name: string;
+  icon: string;
+  category: string;
+  memo?: string | null;
+  repeatType: RepeatType;
+  repeatCount?: number | null;
+  reminderTime?: string | null;
+  reminderEnabled: boolean;
+};
+
+export async function updateHabit(
+  db: SQLiteDatabase,
+  id: number,
+  input: UpdateHabitInput
+): Promise<void> {
+  await db.runAsync(
+    `UPDATE habits
+     SET name = ?, icon = ?, category = ?, memo = ?, repeat_type = ?, repeat_count = ?,
+         reminder_time = ?, reminder_enabled = ?
+     WHERE id = ?`,
+    [
+      input.name,
+      input.icon,
+      input.category,
+      input.memo ?? null,
+      input.repeatType,
+      input.repeatType === 'weekly_n' ? (input.repeatCount ?? null) : null,
+      input.reminderEnabled ? (input.reminderTime ?? null) : null,
+      input.reminderEnabled ? 1 : 0,
+      id,
+    ]
+  );
+}
+
+/** 그만두기(보관) — 목록에서만 숨김, 지난 기록은 유지. */
+export async function archiveHabit(db: SQLiteDatabase, id: number): Promise<void> {
+  await db.runAsync(`UPDATE habits SET archived_at = datetime('now') WHERE id = ?`, [id]);
+}
+
+/** 완전 삭제 — 되돌릴 수 없음. habit_logs는 ON DELETE CASCADE로 함께 삭제됨. */
+export async function deleteHabit(db: SQLiteDatabase, id: number): Promise<void> {
+  await db.runAsync(`DELETE FROM habits WHERE id = ?`, [id]);
+}
+
+/** 보관함(그만둔 습관) 목록 — 완전 삭제 화면에서 사용. */
+export async function listArchivedHabits(db: SQLiteDatabase): Promise<Habit[]> {
+  const rows = await db.getAllAsync<HabitRow>(
+    `SELECT * FROM habits WHERE archived_at IS NOT NULL ORDER BY archived_at DESC`
+  );
+  return rows.map(habitFromRow);
+}

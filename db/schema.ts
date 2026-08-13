@@ -6,6 +6,7 @@
  *         완전 삭제는 habits row 자체를 지우는 별도 동작(보관함에서만 실행).
  * habit_logs: 날짜별 체크/인증 기록. (habit_id, date) 유니크 — 하루에 한 기록.
  *             edited_at은 지난 기록 수정 시 "수정됨" 표시용(PRD 6-3).
+ * app_settings: 설정 화면(PRD 6-4)에서 쓰는 단순 key-value 저장소.
  */
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -39,4 +40,9 @@ CREATE TABLE IF NOT EXISTS habit_logs (
 
 CREATE INDEX IF NOT EXISTS idx_habit_logs_date ON habit_logs(date);
 CREATE INDEX IF NOT EXISTS idx_habit_logs_habit ON habit_logs(habit_id);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `;

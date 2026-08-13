@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/components/useColorScheme';
 import { DB_NAME, migrateDbIfNeeded } from '@/db/client';
 import { Fonts } from '@/constants/Fonts';
+import { initNotifications } from '@/lib/notifications';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -42,6 +43,10 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    initNotifications();
+  }, []);
+
   if (!loaded) {
     return null;
   }
@@ -63,6 +68,8 @@ function RootLayoutNav() {
               options={{ presentation: 'modal', title: '습관 등록' }}
             />
             <Stack.Screen name="habit/[id]/edit" options={{ title: '습관 수정' }} />
+            <Stack.Screen name="habit/manage" options={{ title: '습관 관리' }} />
+            <Stack.Screen name="habit/archive" options={{ title: '보관함' }} />
             <Stack.Screen name="calendar/[date]" options={{ title: '기록' }} />
           </Stack>
         </ThemeProvider>

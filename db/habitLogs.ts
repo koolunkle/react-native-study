@@ -67,15 +67,16 @@ export type DayDetailEntry = {
 };
 
 /**
- * 날짜 상세 화면용 — 해당 날짜에 존재했던(생성일 이전이 아닌) 보관되지 않은 습관과
- * 그날의 완료/인증 기록을 합쳐서 반환.
+ * 날짜 상세 화면용 — 해당 날짜에 존재했던(생성일 이전이 아니고, 그 날짜 이후에 보관된)
+ * 습관과 그날의 완료/인증 기록을 합쳐서 반환.
  */
 export async function getDayDetail(db: SQLiteDatabase, dateKey: string): Promise<DayDetailEntry[]> {
   const habitRows = await db.getAllAsync<HabitRow>(
     `SELECT * FROM habits
-     WHERE archived_at IS NULL AND date(created_at) <= date(?)
+     WHERE (archived_at IS NULL OR archived_at > date(?))
+       AND date(created_at) <= date(?)
      ORDER BY sort_order ASC, id ASC`,
-    [dateKey]
+    [dateKey, dateKey]
   );
   const logRows = await db.getAllAsync<HabitLogRow>(`SELECT * FROM habit_logs WHERE date = ?`, [
     dateKey,

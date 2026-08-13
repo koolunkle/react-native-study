@@ -20,7 +20,11 @@ import {
   setNotifGlobalEnabled,
   type AppSettings,
 } from '@/db/settings';
-import { ensureNotificationPermission, rescheduleAllReminders } from '@/lib/notifications';
+import {
+  ensureNotificationPermission,
+  NOTIFICATIONS_SUPPORTED,
+  rescheduleAllReminders,
+} from '@/lib/notifications';
 
 /**
  * 설정 — PRD 6-4, 6-1
@@ -104,7 +108,9 @@ export default function SettingsScreen() {
           />
           {permissionHint && (
             <Text style={[styles.hint, { color: colors.apricotDeep }]}>
-              알림 권한이 거부되었어요. 기기 설정에서 허용해주세요.
+              {NOTIFICATIONS_SUPPORTED
+                ? '알림 권한이 거부되었어요. 기기 설정에서 허용해주세요.'
+                : '이 브라우저에서는 알림을 사용할 수 없어요. 앱에서 사용해주세요.'}
             </Text>
           )}
           <ListRow

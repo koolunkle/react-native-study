@@ -270,7 +270,7 @@ components:
     padding: 64px 32px
 ---
 
-## Overview
+# Overview
 
 Figma's marketing canvas is, at the system level, an editor-clean black-and-white frame. The chrome — top nav, body type, footer, primary CTA — is monochrome. Headlines are oversized `{typography.display-xl}` set in `figmaSans` with aggressive negative tracking, body copy hovers around weight 320–340 of the same variable family, and small mono `{typography.eyebrow}` and `{typography.caption}` labels (figmaMono, all-caps, positive tracking) act as section markers. Every CTA is a pill — `{rounded.pill}` — and the primary action across the entire site is the same black `{components.button-primary}` paired with the same white `{components.button-secondary}`.
 
@@ -279,6 +279,7 @@ What makes the design unique is what happens **between** those monochrome booken
 This is a system built on contrast: the monochrome chrome makes the color blocks feel intentional rather than decorative, and the color blocks make the monochrome chrome feel like editorial paper rather than enterprise SaaS. Density is generous, line-heights are tight on display sizes, and the interface never reaches for shadows or gradients to do the work that color blocks and confident typography already do.
 
 **Key Characteristics:**
+
 - Monochrome system core: `{colors.primary}` (black) and `{colors.canvas}` (white) carry every CTA, every body line, every footer link.
 - Oversized pastel **color-block sections** (`{colors.block-lime}`, `{colors.block-lilac}`, `{colors.block-cream}`, `{colors.block-mint}`, `{colors.block-pink}`, `{colors.block-coral}`, `{colors.block-navy}`) define the narrative rhythm of every long-form page.
 - Pill is the only button shape — `{rounded.pill}` for text CTAs, `{rounded.full}` for icon buttons. No square buttons anywhere.
@@ -292,11 +293,13 @@ This is a system built on contrast: the monochrome chrome makes the color blocks
 > Source pages: figma.com (home), /design/, /figjam/brainstorming-tool/, /pricing/, /contact/.
 
 ### Brand & Accent
+
 - **Black** ({colors.primary}): The system primary. Every primary CTA, every headline, every body line, the marquee strip, the inverse canvas of dark sections.
 - **White** ({colors.on-primary}): Inverse text on black surfaces; also the canvas color used as the foreground of secondary pill buttons (`{components.button-secondary}`).
 - **Magenta Promo** ({colors.accent-magenta}): A single saturated CTA pink reserved for promotional inline buttons — appears, for example, on the lilac "Save your spot" Release Notes banner. Use scarcely; it is not a section color.
 
 ### Surface
+
 - **Canvas** ({colors.canvas}): Default page background and the body of every white card.
 - **Inverse Canvas** ({colors.inverse-canvas}): Footer, marquee strip, and a subset of "ship products"-style story sections.
 - **Surface Soft** ({colors.surface-soft}): Off-white tile background used for icon buttons, template cards, and feature illustration tiles when they sit on the white canvas.
@@ -311,11 +314,13 @@ This is a system built on contrast: the monochrome chrome makes the color blocks
 - **Block Navy** ({colors.block-navy}): Deep indigo story block — only place dark surfaces appear above the footer.
 
 ### Text
+
 - **Ink** ({colors.ink}): All headline, body, and caption type on light surfaces. There is no softer mid-gray text role on marketing — body copy is always black at weight 320–340, and weight (not opacity) carries the hierarchy.
 - **Inverse Ink** ({colors.inverse-ink}): Type on inverse-canvas surfaces (footer, marquee strip, navy color block).
 - **On-Inverse Soft** ({colors.on-inverse-soft}): White used at ~16% opacity for circular icon-button surfaces against dark sections (token captures the base color; the translucency is applied at render time).
 
 ### Semantic
+
 - **Success Green** ({colors.semantic-success}): Comparison-table checkmarks on pricing. Used as a glyph fill, not a surface.
 - **Overlay Scrim** ({colors.overlay-scrim}): Black used at ~60% opacity behind modal / video-overlay surfaces (token captures the base; opacity applied at render time).
 
@@ -331,7 +336,7 @@ OpenType `kern` is enabled across every role.
 ### Hierarchy
 
 | Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | `{typography.display-xl}` | 86px | 340 | 1.00 | -1.72px | Hero headlines (home, FigJam) |
 | `{typography.display-lg}` | 64px | 340 | 1.10 | -0.96px | Section opener headlines |
 | `{typography.headline}` | 26px | 540 | 1.35 | -0.26px | Story-block titles inside color blocks |
@@ -381,7 +386,7 @@ White space is used to make the color blocks feel deliberate. Between every colo
 ## Elevation & Depth
 
 | Level | Treatment | Use |
-|---|---|---|
+| --- | --- | --- |
 | 0 (flat) | No shadow, no border | Default for color-block sections, inverse-canvas footer, hero |
 | 1 (hairline) | 1px `{colors.hairline}` border on `{colors.canvas}` | Pricing cards, form inputs, comparison table cells |
 | 2 (soft elevation) | Subtle drop shadow approx 0 4px 16px rgba(0,0,0,0.06) | Floating template tiles, dropdown menus |
@@ -400,7 +405,7 @@ Figma's marketing system is shadow-light by design — the color blocks substitu
 ### Border Radius Scale
 
 | Token | Value | Use |
-|---|---|---|
+| --- | --- | --- |
 | `{rounded.xs}` | 2px | Anchor / link decoration corners |
 | `{rounded.sm}` | 6px | Small chips, sub-nav tabs |
 | `{rounded.md}` | 8px | Form inputs, list items, image frames |
@@ -421,48 +426,60 @@ Figma's marketing system is shadow-light by design — the color blocks substitu
 ### Buttons
 
 **`button-primary`** — The black "Get started for free" pill that appears in the top nav, every hero, and every closing CTA.
+
 - Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button}`, padding 10px 20px, rounded `{rounded.pill}`.
 - Pressed state lives in `button-primary-pressed` (same surface; the live site relies on micro-scale rather than a darkened fill).
 
 **`button-secondary`** — White pill with black text. Used for tertiary navigation actions ("Contact sales") and as the visual counterpart to the primary pill.
+
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.button}`, padding 8px 18px 10px (asymmetric vertical to optically center the type), rounded `{rounded.pill}`. No border.
 
 **`button-tertiary-text`** — Plain text link styled as a button hit target inside top nav and footer.
+
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.link}`, rounded `{rounded.full}` (hit target only), padding `{spacing.xs}` `{spacing.sm}`.
 
 **`button-icon-circular`** — 40px circular icon button used for carousel controls, social links, and inline actions on light surfaces.
+
 - Background `{colors.surface-soft}`, text `{colors.ink}`, rounded `{rounded.full}`, size 40px.
 
 **`button-icon-circular-inverse`** — Same shape, used on inverse-canvas / dark color blocks.
+
 - Background `{colors.on-inverse-soft}` (translucent white), text `{colors.inverse-ink}`, rounded `{rounded.full}`, size 40px.
 
 **`button-magenta-promo`** — Saturated pink pill used only inside promotional surfaces such as the lilac "Save your spot" Release Notes banner. Reserved for moments where Figma's product team wants the CTA to pop against an already-colored panel.
+
 - Background `{colors.accent-magenta}`, text `{colors.on-primary}`, type `{typography.button}`, rounded `{rounded.pill}`, padding 10px 18px.
 
 ### Pricing Tabs
 
 **`pricing-tab-default`** + **`pricing-tab-selected`** — The pill-toggle that switches between Starter / Professional / Organization / Enterprise on `/pricing/`.
+
 - Default: `{colors.canvas}` background, `{colors.ink}` text, rounded `{rounded.pill}`.
 - Selected: `{colors.primary}` background, `{colors.on-primary}` text — exactly the same surface as `button-primary`, which makes the selected tab feel like an active CTA, not a passive state.
 
 ### Inputs & Forms
 
 **`text-input`** + **`text-input-focused`** — Form fields on `/contact/` and pricing seat-count steppers.
+
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body}`, rounded `{rounded.md}`, padding 12px 14px.
 - Focused state retains the same surface — focus is communicated via ring, not via fill change.
 
 ### Cards & Containers
 
 **`pricing-card`** — Each tier on `/pricing/`.
+
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body}`, rounded `{rounded.lg}`, padding `{spacing.lg}`. Stroked with `{colors.hairline}` rather than shadowed.
 
 **`pricing-card-feature-row`** — Single row inside the comparison table.
+
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-sm}`. Row separator is `{colors.hairline-soft}`.
 
 **`template-card`** — Thumbnail tile in the home "Explore what people are making" grid and the FigJam template gallery.
+
 - Background `{colors.surface-soft}`, text `{colors.ink}`, type `{typography.body-sm}`, rounded `{rounded.md}`, padding `{spacing.md}`.
 
 **`feature-illustration-tile`** — Larger composition tile that holds a product UI mock or pastel illustration.
+
 - Background `{colors.surface-soft}`, text `{colors.ink}`, type `{typography.eyebrow}`, rounded `{rounded.md}`, padding `{spacing.lg}`.
 
 ### Color-Block Sections (signature)
@@ -470,12 +487,15 @@ Figma's marketing system is shadow-light by design — the color blocks substitu
 The defining surface of Figma's marketing. Each is a full-content-width panel with `{rounded.lg}` corners and `{spacing.xxl}` interior padding. Variants:
 
 **`color-block-section`** — lime ground for "systems" stories (home), pricing FAQ, and the contact form.
+
 - Background `{colors.block-lime}`, text `{colors.ink}`, type `{typography.subhead}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`.
 
 **`color-block-section-lilac`** — lavender ground for `/design/` hero and FigJam highlight sections.
+
 - Background `{colors.block-lilac}`, otherwise identical structure.
 
 **`color-block-section-navy`** — deep indigo ground for the home "Ship products" story block. The only inverse color-block surface above the footer.
+
 - Background `{colors.block-navy}`, text `{colors.inverse-ink}`, otherwise identical structure.
 
 (Cream, mint, pink, and coral block variants follow the same shape with their respective `{colors.block-*}` surface.)
@@ -483,25 +503,30 @@ The defining surface of Figma's marketing. Each is a full-content-width panel wi
 ### Promo Banner
 
 **`promo-banner-lilac`** — The Release Notes / "Save your spot" inline banner that floats above the contact form.
+
 - Background `{colors.block-lilac}`, text `{colors.ink}`, type `{typography.body-sm}`, rounded `{rounded.md}`, padding `{spacing.md}` `{spacing.lg}`. Carries a `button-magenta-promo` on the right edge.
 
 ### Navigation
 
 **`top-nav`** — Sticky white bar with logo, primary nav links, sign-in link, and the right-anchored `button-secondary` ("Contact sales") + `button-primary` ("Get started for free") pair.
+
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-sm}`, height 56px.
 - Mobile: collapses primary links into a hamburger that opens a full-canvas overlay; the two pill CTAs remain visible on the bar.
 
 **`marquee-strip`** — Thin black ribbon directly under the nav that scrolls through customer logos in white.
+
 - Background `{colors.inverse-canvas}`, text `{colors.inverse-ink}`, type `{typography.body-sm}`, height 36px.
 
 ### Comparison Glyphs
 
 **`comparison-checkmark`** — Green check used in the pricing comparison matrix.
+
 - Background `{colors.canvas}`, glyph color `{colors.semantic-success}`, rounded `{rounded.full}`, size 16px.
 
 ### Footer
 
 **`footer`** — Dense link grid on white canvas with the wordmark "Figma" set in display weight at the top-left.
+
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.caption}` for column headings and small links, padding `{spacing.section}` top/bottom · `{spacing.xl}` sides.
 
 ## Do's and Don'ts
@@ -531,7 +556,7 @@ The defining surface of Figma's marketing. Each is a full-content-width panel wi
 ### Breakpoints
 
 | Name | Width | Key Changes |
-|---|---|---|
+| --- | --- | --- |
 | 4k | 1920px | Max content width holds at 1280px; gutters expand |
 | Desktop-XL | 1440px | Default desktop layout |
 | Desktop | 1400px | Comparison table column widths normalize |

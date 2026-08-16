@@ -7,7 +7,7 @@
 ## 기술 스택
 
 | 항목 | 내용 |
-|---|---|
+| --- | --- |
 | 프레임워크 | [Expo](https://expo.dev) (managed workflow) + React Native + TypeScript |
 | 라우팅 | [Expo Router](https://docs.expo.dev/router/introduction/) (파일 기반) |
 | 로컬 저장소 | SQLite ([expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/)) — 웹은 WASM(wa-sqlite) 백엔드 |
@@ -35,7 +35,7 @@ npx expo start --web
 
 ## 프로젝트 구조
 
-```
+```text
 app/
   _layout.tsx           루트 스택 + SQLiteProvider(DB 초기화) + 폰트 로딩 + 다크모드 테마
   (tabs)/                하단 탭: 홈 · 캘린더 · 통계 · 설정

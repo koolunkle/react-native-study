@@ -289,6 +289,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   filterScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
     marginBottom: Spacing.md,
   },
   filterRow: {

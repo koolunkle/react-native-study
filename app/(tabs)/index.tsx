@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
-import { Image, Pressable, StyleSheet } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 
+import { CheckBadge } from '@/components/CheckBadge';
 import { Text, View } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
@@ -11,9 +12,10 @@ import { Radius, Spacing } from '@/constants/Layout';
 import { getDayDetail, toggleHabitLog, type DayDetailEntry } from '@/db/habitLogs';
 import { todayKey } from '@/lib/date';
 
+type CompletedPopupHabit = { id: number; icon: string; name: string };
+
 /**
  * 홈 (오늘) — PRD 6-2
- * TODO: 체크 시 "인증 기록을 남기시겠어요?" 선택 팝업 (PRD 6-2 — 인증 기록 시스템 자체는 구현됨).
  */
 export default function HomeScreen() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
   const [entries, setEntries] = useState<DayDetailEntry[]>([]);
+  const [popupHabit, setPopupHabit] = useState<CompletedPopupHabit | null>(null);
   const today = todayKey();
 
   const reload = useCallback(() => {
@@ -40,8 +43,23 @@ export default function HomeScreen() {
   );
 
   async function handleToggle(habitId: number) {
+    const entry = entries.find((e) => e.habit.id === habitId);
+    const wasCompleted = entry?.log?.completed ?? false;
+
     await toggleHabitLog(db, habitId, today, true);
     await reload();
+
+    if (!wasCompleted && entry) {
+      setPopupHabit({ id: entry.habit.id, icon: entry.habit.icon, name: entry.habit.name });
+    }
+  }
+
+  function openLogEditor(habitId: number) {
+    setPopupHabit(null);
+    router.push({
+      pathname: '/log/[habitId]/[date]',
+      params: { habitId: String(habitId), date: today },
+    });
   }
 
   const total = entries.length;
@@ -99,34 +117,46 @@ export default function HomeScreen() {
                     <Text style={styles.rowCategory}>{habit.category}</Text>
                   )}
                 </Pressable>
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: '/log/[habitId]/[date]',
-                      params: { habitId: String(habit.id), date: today },
-                    })
-                  }
-                  hitSlop={8}
-                  style={styles.editBtn}>
+                <Pressable onPress={() => openLogEditor(habit.id)} hitSlop={8} style={styles.editBtn}>
                   <Text style={styles.editBtnText}>✏️</Text>
                 </Pressable>
                 <Pressable onPress={() => handleToggle(habit.id)} hitSlop={4}>
-                  <View
-                    style={[
-                      styles.check,
-                      {
-                        borderColor: colors.hairline,
-                        backgroundColor: log?.completed ? colors.mintDeep : 'transparent',
-                      },
-                    ]}>
-                    {log?.completed && <Text style={styles.checkMark}>✓</Text>}
-                  </View>
+                  <CheckBadge completed={!!log?.completed} />
                 </Pressable>
               </View>
             ))}
           </View>
         </>
       )}
+
+      <Modal
+        visible={!!popupHabit}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPopupHabit(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setPopupHabit(null)}>
+          <Pressable
+            style={[styles.popupCard, { backgroundColor: colors.surface }]}
+            onPress={(e) => e.stopPropagation?.()}>
+            <Text style={styles.popupTitle}>
+              {popupHabit?.icon} {popupHabit?.name} 완료!
+            </Text>
+            <Text style={[styles.popupBody, { color: colors.inkSoft }]}>
+              인증 기록을 남기시겠어요?
+            </Text>
+            <Pressable
+              onPress={() => popupHabit && openLogEditor(popupHabit.id)}
+              style={[styles.popupPrimaryBtn, { backgroundColor: colors.mintDeep }]}>
+              <Text style={styles.popupPrimaryBtnText}>사진/메모 추가</Text>
+            </Pressable>
+            <Pressable onPress={() => setPopupHabit(null)} style={styles.popupSecondaryBtn}>
+              <Text style={[styles.popupSecondaryBtnText, { color: colors.inkSoft }]}>
+                그냥 완료
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -219,16 +249,50 @@ const styles = StyleSheet.create({
   editBtnText: {
     fontSize: 16,
   },
-  check: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.pill,
-    borderWidth: 2,
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: Spacing.lg,
   },
-  checkMark: {
+  popupCard: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    alignItems: 'center',
+  },
+  popupTitle: {
+    fontFamily: Fonts.title,
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  popupBody: {
+    fontFamily: Fonts.body,
+    fontSize: 14,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  popupPrimaryBtn: {
+    width: '100%',
+    borderRadius: Radius.pill,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+  },
+  popupPrimaryBtnText: {
+    fontFamily: Fonts.body,
+    fontSize: 16,
+    fontWeight: '700',
     color: '#fffdf7',
-    fontSize: 15,
+  },
+  popupSecondaryBtn: {
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  popupSecondaryBtnText: {
+    fontFamily: Fonts.body,
+    fontSize: 14,
   },
 });

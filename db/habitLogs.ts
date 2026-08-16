@@ -61,6 +61,62 @@ export async function getMonthLogSummary(
   return summary;
 }
 
+export type TimelineDayEntry = {
+  date: string;
+  entries: { habitId: number; icon: string; name: string; completed: boolean }[];
+};
+
+/**
+ * 캘린더 리스트(타임라인) 뷰용 — PRD 6-3. yearMonth의 각 날짜마다 "그 날 존재했던 습관"과
+ * 완료 여부를 묶어 최신순으로 반환한다. 존재했던 습관의 정의는 getDayDetail/stats.ts의
+ * expectedCte()와 동일(archived_at 이전이거나 없음 + created_at 이후)하게 맞춰 일관성을 유지한다.
+ * 오늘 이후 날짜는 아직 기록이 없을 게 자명하므로 today를 넘겨 잘라낸다.
+ */
+export async function getMonthTimeline(
+  db: SQLiteDatabase,
+  yearMonth: string,
+  today: string
+): Promise<TimelineDayEntry[]> {
+  const rows = await db.getAllAsync<{
+    date: string;
+    habitId: number;
+    icon: string;
+    name: string;
+    completed: number;
+  }>(
+    `WITH RECURSIVE dates(d) AS (
+       SELECT date(? || '-01')
+       UNION ALL
+       SELECT date(d, '+1 day') FROM dates
+       WHERE d < date(? || '-01', '+1 month', '-1 day')
+     )
+     SELECT dates.d AS date, h.id AS habitId, h.icon AS icon, h.name AS name,
+            COALESCE(hl.completed, 0) AS completed
+     FROM dates
+     JOIN habits h
+       ON (h.archived_at IS NULL OR h.archived_at > dates.d)
+      AND date(h.created_at) <= dates.d
+     LEFT JOIN habit_logs hl ON hl.habit_id = h.id AND hl.date = dates.d
+     WHERE dates.d <= ?
+     ORDER BY dates.d DESC, h.sort_order ASC, h.id ASC`,
+    [yearMonth, yearMonth, today]
+  );
+
+  const byDate = new Map<string, TimelineDayEntry>();
+  for (const row of rows) {
+    if (!byDate.has(row.date)) {
+      byDate.set(row.date, { date: row.date, entries: [] });
+    }
+    byDate.get(row.date)!.entries.push({
+      habitId: row.habitId,
+      icon: row.icon,
+      name: row.name,
+      completed: row.completed === 1,
+    });
+  }
+  return Array.from(byDate.values());
+}
+
 export type DayDetailEntry = {
   habit: Habit;
   log: HabitLog | null;

@@ -45,6 +45,13 @@ export function formatKoreanDateLong(dateKey: string): string {
   return `${y}년 ${m}월 ${d}일 (${weekday})`;
 }
 
+/** 캘린더 리스트(타임라인) 뷰 — 이미 월 단위로 스코프되어 있어 연/월 없이 일자만 표시. */
+export function formatKoreanDayWeekday(dateKey: string): string {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const weekday = WEEKDAY_LABELS_KO[new Date(y, m - 1, d).getDay()];
+  return `${d}일 (${weekday})`;
+}
+
 /** 통계 화면(PRD 6-5)의 기간 선택. */
 export type StatsPeriod = 'week' | 'month' | 'all';
 

@@ -7,6 +7,7 @@ import { ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 import { DB_NAME, migrateDbIfNeeded } from '@/db/client';
 import { Fonts } from '@/constants/Fonts';
 import { initNotifications } from '@/lib/notifications';
@@ -56,12 +57,17 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme];
 
   return (
     <Suspense fallback={<ActivityIndicator style={{ flex: 1 }} />}>
       <SQLiteProvider databaseName={DB_NAME} onInit={migrateDbIfNeeded} useSuspense>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerTitleStyle: { fontFamily: Fonts.title, fontSize: 18 },
+              headerTintColor: colors.text,
+            }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
               name="habit/new"

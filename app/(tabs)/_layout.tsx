@@ -3,6 +3,7 @@ import { Link, Tabs } from 'expo-router';
 import { Pressable } from 'react-native';
 
 import Colors from '@/constants/Colors';
+import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
@@ -13,6 +14,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
+        headerTitleStyle: { fontFamily: Fonts.title, fontSize: 18 },
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),

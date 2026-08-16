@@ -89,6 +89,52 @@ export async function getDayDetail(db: SQLiteDatabase, dateKey: string): Promise
   }));
 }
 
+/** 특정 날짜의 단일 기록 조회 — 인증 기록(사진/메모) 에디터 초기값 로딩용. */
+export async function getHabitLog(
+  db: SQLiteDatabase,
+  habitId: number,
+  dateKey: string
+): Promise<HabitLog | null> {
+  const row = await db.getFirstAsync<HabitLogRow>(
+    `SELECT * FROM habit_logs WHERE habit_id = ? AND date = ?`,
+    [habitId, dateKey]
+  );
+  return row ? logFromRow(row) : null;
+}
+
+/**
+ * 사진/메모(PRD 6-6) 저장. completed 여부는 건드리지 않는다 — 체크와 별개로 인증 기록만
+ * 추가/수정할 수 있어야 하므로. 기록이 아예 없으면 미체크(completed=0) 상태로 새로 만든다.
+ * "수정됨" 표시 규칙은 toggleHabitLog과 동일하게 오늘이 아닌 기록을 바꿀 때만 edited_at을 남긴다.
+ */
+export async function saveHabitLogDetail(
+  db: SQLiteDatabase,
+  habitId: number,
+  dateKey: string,
+  detail: { photoUri: string | null; memo: string | null },
+  isToday: boolean
+): Promise<void> {
+  const existing = await db.getFirstAsync<HabitLogRow>(
+    `SELECT * FROM habit_logs WHERE habit_id = ? AND date = ?`,
+    [habitId, dateKey]
+  );
+
+  if (!existing) {
+    await db.runAsync(
+      `INSERT INTO habit_logs (habit_id, date, completed, photo_uri, memo) VALUES (?, ?, 0, ?, ?)`,
+      [habitId, dateKey, detail.photoUri, detail.memo]
+    );
+    return;
+  }
+
+  await db.runAsync(`UPDATE habit_logs SET photo_uri = ?, memo = ?, edited_at = ? WHERE id = ?`, [
+    detail.photoUri,
+    detail.memo,
+    isToday ? existing.edited_at : new Date().toISOString(),
+    existing.id,
+  ]);
+}
+
 /**
  * 완료 토글. 이미 있는 기록을 "오늘이 아닌 날짜"에서 바꾸는 경우에만 edited_at을 남겨
  * PRD 6-3의 "수정됨" 표시에 사용한다 — 당일 토글이나 최초 기록은 수정으로 치지 않는다.

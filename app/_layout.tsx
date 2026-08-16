@@ -71,6 +71,10 @@ function RootLayoutNav() {
             <Stack.Screen name="habit/manage" options={{ title: '습관 관리' }} />
             <Stack.Screen name="habit/archive" options={{ title: '보관함' }} />
             <Stack.Screen name="calendar/[date]" options={{ title: '기록' }} />
+            <Stack.Screen
+              name="log/[habitId]/[date]"
+              options={{ presentation: 'modal', title: '인증 기록' }}
+            />
           </Stack>
         </ThemeProvider>
       </SQLiteProvider>

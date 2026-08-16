@@ -9,6 +9,7 @@ import Colors from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { Radius, Spacing } from '@/constants/Layout';
 import { getMonthLogSummary, getMonthTimeline, type TimelineDayEntry } from '@/db/habitLogs';
+import { listActiveHabits, type Habit } from '@/db/habits';
 import {
   WEEKDAY_LABELS_KO,
   formatKoreanDayWeekday,
@@ -21,7 +22,6 @@ type ViewMode = 'calendar' | 'list';
 
 /**
  * 캘린더/히스토리 — PRD 6-3
- * TODO: 특정 습관만 선택해서 표시하는 필터링.
  */
 export default function CalendarScreen() {
   const router = useRouter();
@@ -33,26 +33,38 @@ export default function CalendarScreen() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [selectedHabitIds, setSelectedHabitIds] = useState<number[]>([]);
   const [summary, setSummary] = useState<Record<string, string[]>>({});
   const [timeline, setTimeline] = useState<TimelineDayEntry[]>([]);
 
   const yearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
   const today = todayKey();
 
+  function toggleHabitFilter(habitId: number) {
+    setSelectedHabitIds((prev) =>
+      prev.includes(habitId) ? prev.filter((id) => id !== habitId) : [...prev, habitId]
+    );
+  }
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      Promise.all([getMonthLogSummary(db, yearMonth), getMonthTimeline(db, yearMonth, today)]).then(
-        ([summaryResult, timelineResult]) => {
-          if (cancelled) return;
-          setSummary(summaryResult);
-          setTimeline(timelineResult);
-        }
-      );
+      const filterIds = selectedHabitIds.length > 0 ? selectedHabitIds : undefined;
+      Promise.all([
+        listActiveHabits(db),
+        getMonthLogSummary(db, yearMonth, filterIds),
+        getMonthTimeline(db, yearMonth, today, filterIds),
+      ]).then(([habitsResult, summaryResult, timelineResult]) => {
+        if (cancelled) return;
+        setHabits(habitsResult);
+        setSummary(summaryResult);
+        setTimeline(timelineResult);
+      });
       return () => {
         cancelled = true;
       };
-    }, [db, yearMonth, today])
+    }, [db, yearMonth, today, selectedHabitIds])
   );
 
   function goPrevMonth() {
@@ -109,6 +121,45 @@ export default function CalendarScreen() {
           </Pressable>
         ))}
       </View>
+
+      {habits.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={styles.filterRow}>
+          <Pressable
+            onPress={() => setSelectedHabitIds([])}
+            style={[
+              styles.filterChip,
+              {
+                backgroundColor: selectedHabitIds.length === 0 ? colors.lavender : colors.surface,
+                borderColor: selectedHabitIds.length === 0 ? colors.lavenderDeep : colors.hairline,
+              },
+            ]}>
+            <Text style={styles.filterChipText}>전체</Text>
+          </Pressable>
+          {habits.map((habit) => {
+            const active = selectedHabitIds.includes(habit.id);
+            return (
+              <Pressable
+                key={habit.id}
+                onPress={() => toggleHabitFilter(habit.id)}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor: active ? colors.lavender : colors.surface,
+                    borderColor: active ? colors.lavenderDeep : colors.hairline,
+                  },
+                ]}>
+                <Text style={styles.filterChipText}>
+                  {habit.icon} {habit.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {viewMode === 'calendar' ? (
         <>
@@ -236,6 +287,24 @@ const styles = StyleSheet.create({
   viewToggleText: {
     fontFamily: Fonts.body,
     fontSize: 14,
+  },
+  filterScroll: {
+    marginBottom: Spacing.md,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  filterChipText: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
   },
   listContent: {
     paddingHorizontal: Spacing.sm,

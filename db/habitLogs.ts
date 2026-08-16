@@ -39,19 +39,22 @@ function logFromRow(row: HabitLogRow): HabitLog {
 
 /**
  * 캘린더 월별 그리드용 — 그 달에 완료 체크된 습관 아이콘을 날짜별로 묶어서 반환.
- * yearMonth는 'YYYY-MM' 형식.
+ * yearMonth는 'YYYY-MM' 형식. habitIds가 있으면 그 습관들만 필터링(PRD 6-3).
  */
 export async function getMonthLogSummary(
   db: SQLiteDatabase,
-  yearMonth: string
+  yearMonth: string,
+  habitIds?: number[]
 ): Promise<Record<string, string[]>> {
+  const filterClause =
+    habitIds && habitIds.length > 0 ? `AND hl.habit_id IN (${habitIds.map(() => '?').join(',')})` : '';
   const rows = await db.getAllAsync<{ date: string; icon: string }>(
     `SELECT hl.date as date, h.icon as icon
      FROM habit_logs hl
      JOIN habits h ON h.id = hl.habit_id
-     WHERE hl.completed = 1 AND hl.date LIKE ?
+     WHERE hl.completed = 1 AND hl.date LIKE ? ${filterClause}
      ORDER BY hl.date ASC, h.sort_order ASC`,
-    [`${yearMonth}-%`]
+    [`${yearMonth}-%`, ...(habitIds ?? [])]
   );
 
   const summary: Record<string, string[]> = {};
@@ -71,12 +74,16 @@ export type TimelineDayEntry = {
  * 완료 여부를 묶어 최신순으로 반환한다. 존재했던 습관의 정의는 getDayDetail/stats.ts의
  * expectedCte()와 동일(archived_at 이전이거나 없음 + created_at 이후)하게 맞춰 일관성을 유지한다.
  * 오늘 이후 날짜는 아직 기록이 없을 게 자명하므로 today를 넘겨 잘라낸다.
+ * habitIds가 있으면 그 습관들만 필터링(PRD 6-3).
  */
 export async function getMonthTimeline(
   db: SQLiteDatabase,
   yearMonth: string,
-  today: string
+  today: string,
+  habitIds?: number[]
 ): Promise<TimelineDayEntry[]> {
+  const filterClause =
+    habitIds && habitIds.length > 0 ? `AND h.id IN (${habitIds.map(() => '?').join(',')})` : '';
   const rows = await db.getAllAsync<{
     date: string;
     habitId: number;
@@ -96,10 +103,11 @@ export async function getMonthTimeline(
      JOIN habits h
        ON (h.archived_at IS NULL OR h.archived_at > dates.d)
       AND date(h.created_at) <= dates.d
+      ${filterClause}
      LEFT JOIN habit_logs hl ON hl.habit_id = h.id AND hl.date = dates.d
      WHERE dates.d <= ?
      ORDER BY dates.d DESC, h.sort_order ASC, h.id ASC`,
-    [yearMonth, yearMonth, today]
+    [yearMonth, yearMonth, ...(habitIds ?? []), today]
   );
 
   const byDate = new Map<string, TimelineDayEntry>();

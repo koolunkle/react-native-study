@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Platform, StyleSheet } from 'react-native';
 
 import { Text } from '@/components/Themed';
@@ -14,7 +14,10 @@ type CheckBadgeProps = {
 export function CheckBadge({ completed }: CheckBadgeProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
-  const scale = useRef(new Animated.Value(1)).current;
+  // useRef(...).current로 초기화하면 렌더 중 ref를 읽게 되어 최신 React 규칙(react-hooks/refs)에
+  // 걸린다 — Animated.Value처럼 렌더마다 새로 만들면 안 되는 안정적인 값은 useState의 지연
+  // 초기화 함수로 한 번만 생성한다.
+  const [scale] = useState(() => new Animated.Value(1));
   const wasCompleted = useRef(completed);
 
   useEffect(() => {

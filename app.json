@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Happy Habit",
-    "slug": "happy-habit",
+    "name": "react-native-study",
+    "slug": "react-native-study",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "happyhabit",
+    "scheme": "reactnativestudy",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
@@ -21,7 +21,7 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.anonymous.happyhabit"
+      "package": "com.anonymous.reactnativestudy"
     },
     "web": {
       "bundler": "metro",

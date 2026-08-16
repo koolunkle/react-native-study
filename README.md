@@ -1,8 +1,8 @@
-# Happy Habit 🌱
+# react-native-study
 
 > 습관 인증 서비스 — 종이 다이어리에 스티커 붙이듯, 복잡한 문법 없이 단순하게 습관을 기록하는 앱
 
-개인 토이 프로젝트로, React Native/Expo 학습을 겸해 만들고 있는 MVP입니다. 자세한 제품 요구사항은 [PRD.md](./PRD.md), 디자인 시스템 참고 자료는 [DESIGN.md](./DESIGN.md)를 확인하세요.
+React Native/Expo 학습을 겸해 만든 개인 토이 프로젝트입니다. 자세한 제품 요구사항은 [PRD.md](./PRD.md), 디자인 시스템 참고 자료는 [DESIGN.md](./DESIGN.md)를 확인하세요.
 
 ## 기술 스택
 

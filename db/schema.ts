@@ -7,6 +7,11 @@
  * habit_logs: 날짜별 체크/인증 기록. (habit_id, date) 유니크 — 하루에 한 기록.
  *             edited_at은 지난 기록 수정 시 "수정됨" 표시용(PRD 6-3).
  * app_settings: 설정 화면(PRD 6-4)에서 쓰는 단순 key-value 저장소.
+ *
+ * created_at/archived_at은 'localtime'으로 저장한다 — 캘린더/통계의 "그 날 존재했던
+ * 습관" 판정(db/habitLogs.ts, db/stats.ts)이 전부 기기 로컬 날짜(YYYY-MM-DD)와
+ * 비교하는데, 기본값인 UTC로 저장하면 UTC보다 시간대가 앞선 지역(KST 등)에서
+ * 자정 근처에 만들거나 그만둔 습관이 하루 어긋나 집계될 수 있다.
  */
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -23,7 +28,7 @@ CREATE TABLE IF NOT EXISTS habits (
   reminder_enabled INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0,
   archived_at TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
 CREATE TABLE IF NOT EXISTS habit_logs (
@@ -34,7 +39,7 @@ CREATE TABLE IF NOT EXISTS habit_logs (
   photo_uri TEXT,
   memo TEXT,
   edited_at TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
   UNIQUE (habit_id, date)
 );
 

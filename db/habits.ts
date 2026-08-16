@@ -74,10 +74,15 @@ export type NewHabitInput = {
   repeatCount?: number | null;
 };
 
+/**
+ * created_at을 INSERT에서 명시적으로 localtime으로 지정한다 — 테이블의 DEFAULT
+ * 절에만 의존하면 이미 생성된(예전 UTC 기본값의) 테이블에는 반영되지 않기 때문에,
+ * 스키마 재생성 없이도 항상 올바른 로컬 날짜로 저장되도록 하기 위함.
+ */
 export async function insertHabit(db: SQLiteDatabase, input: NewHabitInput): Promise<number> {
   const result = await db.runAsync(
-    `INSERT INTO habits (name, icon, category, memo, repeat_type, repeat_count)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO habits (name, icon, category, memo, repeat_type, repeat_count, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
     [
       input.name,
       input.icon,
@@ -130,9 +135,14 @@ export async function updateHabit(
   );
 }
 
-/** 그만두기(보관) — 목록에서만 숨김, 지난 기록은 유지. */
+/**
+ * 그만두기(보관) — 목록에서만 숨김, 지난 기록은 유지.
+ * localtime으로 저장 — schema.ts의 created_at과 동일한 이유(로컬 날짜 비교 일관성).
+ */
 export async function archiveHabit(db: SQLiteDatabase, id: number): Promise<void> {
-  await db.runAsync(`UPDATE habits SET archived_at = datetime('now') WHERE id = ?`, [id]);
+  await db.runAsync(`UPDATE habits SET archived_at = datetime('now', 'localtime') WHERE id = ?`, [
+    id,
+  ]);
 }
 
 /** 완전 삭제 — 되돌릴 수 없음. habit_logs는 ON DELETE CASCADE로 함께 삭제됨. */
